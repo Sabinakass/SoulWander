@@ -1,0 +1,10 @@
+{
+	"welcome_back": "Добро пожаловать обратно, <%= username %>",
+	"how_are_you_feeling": "Как ты себя чувствуешь сегодня?",
+	"welcome_to_soulwander": "Добро пожаловать в SoulWander",
+	"find_yourself": "Найди себя. Найди спокойствие.",
+	"start_new_entry": "Начать новую запись",
+	"feeling_message": "Вы чувствуете <%= mood %>. Хотели бы вы поделиться своими чувствами в своем дневнике?",
+	"welcome_guest_message": "welcome_guest_message",
+	"welcome_message": "welcome_message"
+}

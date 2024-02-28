@@ -9,7 +9,6 @@ const bcrypt = require('bcrypt');
 const axios = require('axios');
 const translate = require('translate-google');
 const Item = require('./models/item');
-const { af } = require("translate-google/languages");
 
 
 
@@ -52,18 +51,46 @@ app.use((req, res, next) => {
         req.session.userLanguage = req.query.lang;
     }
 
-    req.session.userLanguage = req.session.userLanguage || 'en';
+    req.session.userLanguage = req.session.userLanguage || 'ru';
 
+    res.locals.userLanguage = req.session.userLanguage; // Make userLanguage available in all templates
     next();
 });
+
+
+
+
+
+const i18n = require('i18n');
+
+i18n.configure({
+    locales: ['en', 'ru'],
+    directory: __dirname + '/locales',
+    defaultLocale: 'en',
+    cookie: 'lang',
+    queryParameter: 'lang',
+    autoReload: true,
+    updateFiles: true,
+    syncFiles: true,
+});
+
+app.use(i18n.init);
+
 
 app.get('/', (req, res) => {
     if (req.user) {
         if (req.user.role === 'user') {
-            res.render('welcome', { username: req.user.username, loggedInUser: req.user });
+            res.render('welcome', {
+                username: req.user.username,
+                loggedInUser: req.user,
+              
+            });
         } 
     } else {
-        res.render('welcome_guest', { loggedInUser: req.user }); 
+        res.render('welcome_guest', {
+            loggedInUser: req.user,
+            welcomeMessage: res.__('welcome_guest_message') // Use the translation for 'welcome_guest_message' key
+        }); 
     }
 });
 

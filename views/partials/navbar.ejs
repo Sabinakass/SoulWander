@@ -3,6 +3,7 @@
         background-color: #a3e7fc; 
         display: flex;
         align-items: center;
+        justify-content: space-between;
     }
 
     .navbar-brand {
@@ -17,23 +18,24 @@
 
     .navbar-brand .logo-text {
         font-size: 1.5em; 
-      
     }
-    .btn-outline-success{
+    
+    .btn-outline-success {
         background-color: #ACE894;
     }
-    .btn-custom{
+
+    .btn-custom {
         --bs-btn-color: var(--bs-black);
         --bs-btn-bg: #26c485;
-  --bs-btn-border-color: #26c485;
-  --bs-btn-border-radius: .5rem;
-  --bs-btn-hover-color: var(--bs-black);
-  --bs-btn-hover-bg: #26c485;
-  --bs-btn-hover-border-color:#26c485;
-  --bs-btn-focus-shadow-rgb: #26c485;
-  --bs-btn-active-color: var(--bs-btn-hover-color);
-  --bs-btn-active-bg:#26c485;
-  --bs-btn-active-border-color: #26c485;
+        --bs-btn-border-color: #26c485;
+        --bs-btn-border-radius: .5rem;
+        --bs-btn-hover-color: var(--bs-black);
+        --bs-btn-hover-bg: #26c485;
+        --bs-btn-hover-border-color: #26c485;
+        --bs-btn-focus-shadow-rgb: #26c485;
+        --bs-btn-active-color: var(--bs-btn-hover-color);
+        --bs-btn-active-bg: #26c485;
+        --bs-btn-active-border-color: #26c485;
     }
 
     .btn-custom .dropdown-toggle {
@@ -46,45 +48,54 @@
         order: 1;
     }
 
-    .btn-custom  span {
+    .btn-custom span {
         order: 2;
         font-size: 1.3em; 
     }
+
+    .language-select {
+        border: 0;
+        background: transparent;
+        padding: 0.5rem;
+        margin-left: 1rem;
+    }
 </style>
 <nav class="navbar navbar-expand-lg navbar-light navbar-custom">
-    <div class="container">
+    <div class="container-fluid">
         <a class="navbar-brand" href="/">
             <img src="/images/logo.png" alt="SoulWander" width="70" height="70">
             <span class="logo-text">SoulWander</span>
         </a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav ms-auto">
+        <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+            <div class="navbar-nav ms-auto">
                 <% if (!loggedInUser) { %>
-                    <li class="nav-item">
-                        <a href="/signup" class="btn btn-outline-success">Sign Up</a>
-                    </li>
+                    <a href="/signup" class="nav-link">Sign Up</a>
+                    <form class="d-flex">
+                        <select class="form-select language-select" onchange="window.location.href = '?lang=' + this.value">
+                            <option value="ru" <%= (userLanguage === 'ru') ? 'selected' : '' %>>Русский</option>
+                            <option value="en" <%= (userLanguage === 'en') ? 'selected' : '' %>>English</option>
+                        </select>
+                    </form>
                 <% } else { %>
-                    <li class="nav-item mx-5">
-                        <a class="nav-link" href="/advices">Advices</a>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle btn btn-custom" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <img src="/images/user-default-icon.png" alt="User" width="30" height="30" style="border-radius: 25px;">
+                    <a href="/advices" class="nav-link">Advices</a>
+                    <div class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle btn btn-custom" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <%= loggedInUser.username %>
                         </a>
-                        <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
                             <li><a class="dropdown-item" href="/profile">My Profile</a></li>
                             <li><a class="dropdown-item" href="/goal">My Goals</a></li>
                             <li><a class="dropdown-item" href="/journal">My Journal</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="/logout">Logout</a></li>
                         </ul>
-                    </li>
+                    </div>
                 <% } %>
-            </ul>
+               
+            </div>
         </div>
     </div>
 </nav>
