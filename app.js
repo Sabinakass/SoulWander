@@ -44,18 +44,9 @@ app.use((req, res, next) => {
       req.user = null;
     }
     next();
-  });
-
-  app.use((req, res, next) => {
-    if (req.query.lang) {
-        req.session.userLanguage = req.query.lang;
-    }
-
-    req.session.userLanguage = req.session.userLanguage || 'ru';
-
-    res.locals.userLanguage = req.session.userLanguage; // Make userLanguage available in all templates
-    next();
 });
+
+  
 
 
 
@@ -77,20 +68,39 @@ i18n.configure({
 app.use(i18n.init);
 
 
-app.get('/', (req, res) => {
-    if (req.user) {
-        if (req.user.role === 'user') {
-            res.render('welcome', {
-                username: req.user.username,
+app.use((req, res, next) => {
+    if (req.query.lang) {
+        req.session.userLanguage = req.query.lang;
+    }
+
+    req.session.userLanguage = req.session.userLanguage || 'ru';
+
+    res.locals.userLanguage = req.session.userLanguage; 
+   
+    next();
+});
+
+app.get('/', async(req, res) => {
+    try {
+        const goals = await Goal.find({ user: req.user ? req.user._id : null }); 
+        if (req.user) {
+            if (req.user.role === 'user') {
+                res.render('welcome', {
+                    username: req.user.username,
+                    loggedInUser: req.user,
+                    goals: goals,
+                });
+            } 
+        } else {
+            const welcomeMessage = res.__('welcome_guest_message');
+            res.render('welcome_guest', {
                 loggedInUser: req.user,
-              
-            });
-        } 
-    } else {
-        res.render('welcome_guest', {
-            loggedInUser: req.user,
-            welcomeMessage: res.__('welcome_guest_message') // Use the translation for 'welcome_guest_message' key
-        }); 
+                welcomeMessage: welcomeMessage
+            }); 
+        }
+    } catch (error) {
+        console.error('Error fetching goals:', error);
+        res.status(500).send('Error loading goals page');
     }
 });
 
@@ -258,29 +268,54 @@ app.get('/profile',(req, res) => {
 
 app.post('/update-profile', async (req, res) => {
     try {
-        const user = req.session.user;
-        if (!user) {
+        if (!req.session.user) {
             return res.status(401).send('Unauthorized');
         }
 
         const { username, email, password } = req.body;
 
-        user.username = username;
-        user.email = email;
+        // Fetch the user from the database using the session user's ID
+        const user = await User.findById(req.session.user._id);
+        if (!user) {
+            return res.status(404).send('User not found');
+        }
+
+        // Create an array to keep track of what was updated
+        let updates = [];
+
+        if (user.username !== username) {
+            user.username = username;
+            updates.push('username');
+        }
+
+        if (user.email !== email) {
+            user.email = email;
+            updates.push('email');
+        }
 
         if (password) {
             const hashedPassword = await bcrypt.hash(password, 10);
             user.password = hashedPassword;
+            updates.push('password');
         }
 
+        // Save the user document using Mongoose's save function
         await user.save();
 
-        res.redirect('/my_profile');
+        // Update the user in the session as well
+        req.session.user = user.toObject();
+
+        // Join the updates array to create a string for the flash message
+        let updateMessage = updates.length ? `Updated ${updates.join(', ')}.` : 'No changes were made.';
+
+        // Redirect with the update message
+        res.redirect(`/profile?message=${encodeURIComponent(updateMessage)}`);
     } catch (error) {
         console.error('Error updating profile:', error);
         res.status(500).send('Server Error');
     }
 });
+
 
 app.post('/delete-profile', async (req, res) => {
     try {
@@ -336,7 +371,7 @@ app.post('/addItem', async (req, res) => {
 
     const unsplashResponse = await axios.get(`https://api.unsplash.com/photos/random?count=3&query=${imageCategory}`, {
         headers: {
-            Authorization: 'Client-ID proccess.env.ACCESS_KEY'
+            Authorization: 'Client-ID IcI_82XblEfjerdZ0mxSetTydmyNgCYr57mpuIjlsLY'
         }
     
     });
@@ -458,9 +493,9 @@ app.post('/admin/updateItem/:id', async (req, res) => {
         
         const items = await Item.find({}); 
 
-        const userLanguage = req.session.userLanguage || 'en'; 
+        const userLanguage = req.session.userLanguage ||'en'; 
 
-        res.render('advices', { items: items,userLanguage:userLanguage });
+        res.render('advices', { items: items,userLanguage:userLanguage, loggedInUser: req.user });
     } catch (error) {
         console.error('Error fetching items:', error);
         res.status(500).send('Error loading the advices page');

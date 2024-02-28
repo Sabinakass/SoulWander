@@ -8,7 +8,7 @@ SoulWander is a web application designed to help users explore their emotions, s
 - **Journaling**: Users can create journal entries to reflect on their thoughts, feelings, and experiences.
 - **Mood Tracking**: Users can track their mood by selecting from a range of emotions and optionally journal about it.
 - **Goal Setting**: Users can set personal goals and track their progress over time.
-- **Multilingual Support**: The application supports multiple languages, including English and Russian, to cater to a diverse user base.
+- **Multilingual Support**: The application supports multiple languages, including English and Russian, to cater to a diverse user base. But only on welcoming guests of the website and advices page.
 
 ## Technologies Used
 
@@ -55,3 +55,8 @@ or
 by accesong heroku link
 
 https://soul-wander-a1dc0ba482d4.herokuapp.com
+
+---secret-info-----
+acces to admin page
+admin@example.com as an email
+hashed_password_here as a password
