@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Item</title>
+</head>
+<body>
+    <h1>Edit Item</h1>
+    <form action="/admin/updateItem/<%= item._id %>" method="POST">
+        <div>
+            <label for="affirmationType">Affirmation Type:</label>
+            <select id="affirmationType" name="affirmationType">
+                <option value="affirmation" <%= item.affirmationType === 'affirmation' ? 'selected' : '' %>>Affirmation</option>
+                <option value="bored" <%= item.affirmationType === 'bored' ? 'selected' : '' %>>Activity Recommendations</option>
+            </select>
+        </div>
+        <div>
+            <label for="descriptionEn">Description (English):</label>
+            <textarea id="descriptionEn" name="descriptionEn" rows="4" required><%= item.descriptions.find(d => d.language === 'en').description %></textarea>
+        </div>
+        <div>
+            <label for="descriptionRu">Description (Russian):</label>
+            <textarea id="descriptionRu" name="descriptionRu" rows="4" required><%= item.descriptions.find(d => d.language === 'ru').description %></textarea>
+        </div>
+        <button type="submit">Update Item</button>
+    </form>
+</body>
+</html>

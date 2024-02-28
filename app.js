@@ -1,13 +1,15 @@
 require("dotenv").config();
 const express = require("express");
 const session = require("express-session");
-const axios = require("axios");
 const mongoose = require("mongoose");
 const User = require("./models/user");
 const Goal=require("./models/goal");
 const JournalEntry=require("./models/journal");
 const bcrypt = require('bcrypt');
-
+const axios = require('axios');
+const translate = require('translate-google');
+const Item = require('./models/item');
+const { af } = require("translate-google/languages");
 
 
 
@@ -33,6 +35,7 @@ app.use(
   })
 );
 
+
 app.set("view engine", "ejs");
 
 app.use((req, res, next) => {
@@ -44,13 +47,21 @@ app.use((req, res, next) => {
     next();
   });
 
+  app.use((req, res, next) => {
+    if (req.query.lang) {
+        req.session.userLanguage = req.query.lang;
+    }
+
+    req.session.userLanguage = req.session.userLanguage || 'en';
+
+    next();
+});
+
 app.get('/', (req, res) => {
     if (req.user) {
         if (req.user.role === 'user') {
             res.render('welcome', { username: req.user.username, loggedInUser: req.user });
-        } else if (req.user.role === 'admin') {
-            res.render('admin');
-        }
+        } 
     } else {
         res.render('welcome_guest', { loggedInUser: req.user }); 
     }
@@ -62,32 +73,33 @@ app.get('/', (req, res) => {
 });
 
 
-app.post('/login', async (req, res) => {
+
+  app.post('/login', async (req, res) => {
     try {
-      // Assuming authentication is successful and user information is available in req.body
-      const userData = req.body; // User information obtained from login form
-  
-      // Example: Set the user's role to 'user'
-      userData.role = 'user';
-  
-      // Update user's role in the database
-      const user = await User.findOneAndUpdate({ email: userData.email }, { role: userData.role }, { new: true });
-  
-      if (!user) {
-        // Handle case where user is not found
-        return res.status(404).send('User not found');
-      }
-  
-      // Store user information in session
-      req.session.user = user;
-  
-      // Redirect to homepage or desired page
-      res.redirect('/');
+        const { email } = req.body; 
+
+        const user = await User.findOne({ email: email });
+
+        if (user) {
+            if (user.role === 'admin') {
+                req.session.user = user;
+                req.session.role = 'admin'; 
+
+                res.redirect('/admin');
+            } else {
+                req.session.user = user;
+                req.session.role = 'user'; 
+
+                res.redirect('/');
+            }
+        } else {
+            res.status(401).send('Login Failed: User not found or password incorrect');
+        }
     } catch (error) {
-      console.error('Error updating user role:', error);
-      res.status(500).send('Server Error');
+        console.error('Login Error:', error);
+        res.status(500).send('Internal Server Error');
     }
-  });
+});
 
 app.get('/signup', (req, res) => {
     res.render('signup');
@@ -162,7 +174,7 @@ app.get('/goal', async (req, res) => {
        
         const goals = await Goal.find({ user: req.user._id }); 
 
-        res.render('goal', { goals: goals });
+        res.render('goal', { goals: goals,  loggedInUser:req.user });
     } catch (error) {
         console.error('Error fetching goals:', error);
         res.status(500).send('Error loading goals page');
@@ -185,16 +197,14 @@ app.get('/journal', async (req, res) => {
     }
 });
 
+
+
+
 app.get('/new-entry', (req, res) => {
-    const mood = req.query.mood;
-    try {
-        // Render your 'add new entry' page here, passing the mood to the template
-        res.render('new-entry',{loggedInUser: req.user}); 
-    } catch (error) {
-        console.error(error);
-        res.status(500).send('An error occurred while preparing to create a new entry');
-    }
+    const feeling = req.query.feeling; 
+    res.render('new-entry', {loggedInUser: req.user, feeling: feeling });
 });
+
 
 app.post('/new-entry', async (req, res) => {
    
@@ -214,7 +224,231 @@ app.post('/new-entry', async (req, res) => {
     }
 });
 
+app.get('/profile',(req, res) => {
+   
+    res.render('my_profile', {loggedInUser: req.user,user: req.user});
+});
+
+app.post('/update-profile', async (req, res) => {
+    try {
+        const user = req.session.user;
+        if (!user) {
+            return res.status(401).send('Unauthorized');
+        }
+
+        const { username, email, password } = req.body;
+
+        user.username = username;
+        user.email = email;
+
+        if (password) {
+            const hashedPassword = await bcrypt.hash(password, 10);
+            user.password = hashedPassword;
+        }
+
+        await user.save();
+
+        res.redirect('/my_profile');
+    } catch (error) {
+        console.error('Error updating profile:', error);
+        res.status(500).send('Server Error');
+    }
+});
+
+app.post('/delete-profile', async (req, res) => {
+    try {
+        const user = req.session.user;
+        if (!user) {
+            return res.status(401).send('Unauthorized');
+        }
+
+        await User.findByIdAndDelete(user._id);
+
+        req.session.destroy();
+
+        res.redirect('/');
+    } catch (error) {
+        console.error('Error deleting profile:', error);
+        res.status(500).send('Server Error');
+    }
+});
+
+const isAdmin = (req, res, next) => {
+    if (req.user && req.user.role === 'admin') {
+       
+        next();
+    } else {
+        
+        res.status(403).send('Access forbidden');
+    }
+};
+
+app.get('/admin', isAdmin,async (req, res) => {
+    try {
+        const items = await Item.find({});
+        const userLanguage = req.session.userLanguage || 'en';
+        res.render("admin_dash", {
+          items: items,
+          userLanguage:userLanguage 
+        });
+      } catch (error) {
+        console.error("Error fetching users:", error);
+        res.status(500).send("Error loading admin page");
+      }
+
+});
 
 
+app.get('/admin/addItem', async (req, res) => {
+    res.render('addItemForm')
+})
+
+
+app.post('/addItem', async (req, res) => {
+    const { imageCategory, affirmationType } = req.body;
+
+    const unsplashResponse = await axios.get(`https://api.unsplash.com/photos/random?count=3&query=${imageCategory}`, {
+        headers: {
+            Authorization: 'Client-ID proccess.env.ACCESS_KEY'
+        }
+    
+    });
+    const imageUrls = unsplashResponse.data.map(image => image.urls.regular);
+
+    try {
+        let content;
+        let translatedType;
+
+        if (affirmationType === 'affirmation') {
+            content = 'Affirmation'; 
+            translatedType = await translate('Affirmation', { to: 'ru' }); 
+        } else if (affirmationType === 'bored') {
+            content = 'Activity Recommendations'; 
+            translatedType = await translate('Activity Recommendations', { to: 'ru' });
+        } else {
+            throw new Error('Invalid affirmation type');
+        }
+let description;
+
+if (affirmationType === 'affirmation') {
+    const response = await axios.get('https://www.affirmations.dev/');
+    description = response.data.affirmation;
+} else if (affirmationType === 'bored') {
+    const response = await axios.get('https://www.boredapi.com/api/activity?participants=1');
+    description = response.data.activity;
+} else {
+    throw new Error('Invalid affirmation type');
+}
+const translatedDescRu = await translate(description, { to: 'ru' });
+        const newItem = new Item({
+            pictureUrls:imageUrls,
+            names: [
+                { language: 'en', name: content },
+                { language: 'ru', name: translatedType }
+            ],
+            descriptions: [
+                { language: 'en', description: description },
+                { language: 'ru', description: translatedDescRu }
+            ],
+            timestamps: {
+                created: new Date(),
+                updated: null,
+                deleted: null
+            }
+        });
+        await newItem.save();
+
+       
+        //res.status(201).json({ message: 'Item added successfully', newItem });
+        res.redirect('/admin')
+    } catch (error) {
+        console.error('Error adding item:', error);
+        res.status(500).json({ error: 'Failed to add item' });
+    }
+});
+
+app.get('/admin/editItem/:id', async (req, res) => {
+    try {
+        const itemId = req.params.id;
+      
+        const item = await Item.findById(itemId);
+        if (!item) {
+           
+            return res.status(404).send('Item not found');
+        }
+        
+        res.render('editItemForm', { item: item });
+    } catch (error) {
+        console.error('Error fetching item for editing:', error);
+      
+        res.status(500).send('Internal Server Error');
+    }
+});
+
+
+app.post('/admin/updateItem/:id', async (req, res) => {
+   
+
+    const { id } = req.params;
+    const { affirmationType, descriptionEn, descriptionRu } = req.body;
+  
+    try {
+      
+      const updatedDescriptions = [
+        { language: 'en', description: descriptionEn },
+        { language: 'ru', description: descriptionRu }
+      ];
+  const updateAffirmationType=affirmationType;
+  
+      await Item.findByIdAndUpdate(id, {
+        affirmationType:updateAffirmationType,
+        descriptions: updatedDescriptions
+      });
+  
+      res.redirect('/admin'); 
+    } catch (error) {
+      console.error('Error updating item:', error);
+      res.status(500).send('Error updating the item');
+    }
+  });
+
+  app.post('/admin/deleteItem/:id', async (req, res) => {
+    try {
+        const itemId = req.params.id;
+        const deletedItem = await Item.findByIdAndDelete(itemId);
+        if (!deletedItem) {
+            return res.status(404).send('Item not found');
+        }
+        res.redirect('/admin'); 
+    } catch (error) {
+        console.error('Error deleting item:', error);
+        res.status(500).send('Internal Server Error');
+    }
+});
+
+  app.get('/advices', async (req, res) => {
+    try {
+        
+        const items = await Item.find({}); 
+
+        const userLanguage = req.session.userLanguage || 'en'; 
+
+        res.render('advices', { items: items,userLanguage:userLanguage });
+    } catch (error) {
+        console.error('Error fetching items:', error);
+        res.status(500).send('Error loading the advices page');
+    }
+});
+
+app.get('/logout', (req, res) => {
+    req.session.destroy((err) => {
+        if (err) {
+            console.error('Error destroying session:', err);
+            res.status(500).send('Error logging out');
+        } else {
+            res.redirect('/');
+        }
+    });
+});
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

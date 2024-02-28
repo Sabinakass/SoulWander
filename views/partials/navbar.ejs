@@ -54,25 +54,37 @@
 <nav class="navbar navbar-expand-lg navbar-light navbar-custom">
     <div class="container">
         <a class="navbar-brand" href="/">
-            <img src="/images/logo.png" alt="SoulWander" width="70" height="70" class="d-inline-block align-top">
+            <img src="/images/logo.png" alt="SoulWander" width="70" height="70">
             <span class="logo-text">SoulWander</span>
         </a>
-        <% if (!loggedInUser) { %>
-            <a href="/signup" class="btn btn-outline-success ">Sign Up</a>
-        <% } else { %>
-            <div class="dropdown">
-                <button class="btn btn-custom dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
-                    <img src="/images/user-default-icon.png" alt="User" width="30" height="30" class="d-inline-block align-top" style="border-radius: 25px;">
-                    <span><%= loggedInUser.username %></span>
-                </button>
-                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                    <li><a class="dropdown-item" href="/profile">My Profile</a></li>
-                    <li><a class="dropdown-item" href="/goal">My Goals</a></li>
-                    <li><a class="dropdown-item" href="/journal">My Journal</a></li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item" href="/logout">Logout</a></li>
-                </ul>
-            </div>
-        <% } %>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <% if (!loggedInUser) { %>
+                    <li class="nav-item">
+                        <a href="/signup" class="btn btn-outline-success">Sign Up</a>
+                    </li>
+                <% } else { %>
+                    <li class="nav-item mx-5">
+                        <a class="nav-link" href="/advices">Advices</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle btn btn-custom" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <img src="/images/user-default-icon.png" alt="User" width="30" height="30" style="border-radius: 25px;">
+                            <%= loggedInUser.username %>
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+                            <li><a class="dropdown-item" href="/profile">My Profile</a></li>
+                            <li><a class="dropdown-item" href="/goal">My Goals</a></li>
+                            <li><a class="dropdown-item" href="/journal">My Journal</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/logout">Logout</a></li>
+                        </ul>
+                    </li>
+                <% } %>
+            </ul>
+        </div>
     </div>
 </nav>

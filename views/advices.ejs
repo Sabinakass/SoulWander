@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Items</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet"> <!-- Include Bootstrap CSS -->
+</head>
+<body>
+    <div class="container">
+        <h1 class="mt-5 mb-4">Advices</h1>
+        <div class="row">
+            <% items.forEach(item => { %>
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title"><%= item.names.find(name => name.language === userLanguage).name %></h5> <!-- Display item name based on user's language preference -->
+                            <div id="carousel<%= item._id %>" class="carousel slide mb-3" data-ride="carousel">
+                                <div class="carousel-inner">
+                                    <% item.pictureUrls.forEach((url, index) => { %>
+                                        <div class="carousel-item <%= index === 0 ? 'active' : '' %>">
+                                            <img src="<%= url %>" class="d-block w-100" alt="Item Image">
+                                        </div>
+                                    <% }); %>
+                                </div>
+                                <a class="carousel-control-prev" href="#carousel<%= item._id %>" role="button" data-slide="prev">
+                                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                    <span class="sr-only">Previous</span>
+                                </a>
+                                <a class="carousel-control-next" href="#carousel<%= item._id %>" role="button" data-slide="next">
+                                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                    <span class="sr-only">Next</span>
+                                </a>
+                            </div>
+                            <p class="card-text"><%= item.descriptions.find(description => description.language === userLanguage).description %></p> <!-- Display item description based on user's language preference -->
+                        </div>
+                    </div>
+                </div>
+            <% }); %>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

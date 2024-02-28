@@ -10,23 +10,32 @@
       width: 100px;
       height: auto;
       cursor: pointer;
-      border: 3px solid transparent; /* Add border to images */
+      border: 3px solid transparent; 
     }
     .feeling-images img:hover {
       opacity: 0.7;
     }
     .feeling-images img.selected {
-      border-color: #26c485; /* Highlight selected image */
+      border-color: #26c485; 
     }
     .selected-feeling {
       display: none;
     }
+    .center-content {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    
+   
   </style>
 </head>
 <body>
   <%- include('partials/navbar') %>
-  <div class="container mt-5">
+  <div class="container  center-content mt-5">
     <h1 class="display-3 text-center mb-4">Welcome back, <%= username %></h1>
+    <h1 class="display-5 text-center mb-4">How are you feeling today?</h1>
     <form id="moodForm" action="/new-entry" method="GET">
       <div class="feeling-images">
         <% const moods = ['Happy', 'Calm', 'Confused', 'Angry', 'Sad']; %>
@@ -38,25 +47,36 @@
     </form>
     <div class="selected-feeling" id="selectedFeeling">
       <h2 id="feelingMessage"></h2>
+      <button id="newEntryBtn" class="btn btn-primary ">Start New Entry</button>
     </div>
   </div>
   <script>
     const feelingImages = document.querySelectorAll('.feeling-images img');
     const moodInput = document.getElementById('moodInput');
     const moodForm = document.getElementById('moodForm');
+    const newEntryBtn = document.getElementById('newEntryBtn');
     
     feelingImages.forEach(img => {
-      img.addEventListener('click', function() {
-        feelingImages.forEach(img => img.classList.remove('selected'));
-        this.classList.add('selected');
-        moodInput.value = this.dataset.mood;
-        document.getElementById('selectedFeeling').style.display = 'block';
-        document.getElementById('feelingMessage').textContent = `You are feeling ${this.alt}`;
-        
-        moodForm.submit(); // Submit the form when an image is clicked
-      });
+        img.addEventListener('click', function() {
+            feelingImages.forEach(img => img.classList.remove('selected'));
+            this.classList.add('selected');
+            moodInput.value = this.dataset.mood;
+            document.getElementById('selectedFeeling').style.display = 'flex';
+            document.getElementById('selectedFeeling').style.flexDirection = 'column';
+            document.getElementById('selectedFeeling').style.justifyContent = 'center';
+            document.getElementById('selectedFeeling').style.alignItems = 'center';
+            document.getElementById('selectedFeeling').style.width ='100%';
+            document.getElementById('feelingMessage').textContent = `You are feeling ${this.alt}. Would you like to share more of your feelings in your journal?`;
+            newEntryBtn.style.display = 'block'; 
+        });
+    });
+
+    newEntryBtn.addEventListener('click', function() {
+        window.location.href = `/new-entry?feeling=${moodInput.value}`;
     });
   </script>
+  
+  
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
